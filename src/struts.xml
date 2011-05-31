@@ -1,0 +1,751 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+
+<struts>
+
+	<package name="app-default" extends="struts-default">
+		<result-types>
+			<result-type name="tiles" class="org.apache.struts2.views.tiles.TilesResult" />
+		</result-types>
+
+		<interceptors>
+
+			<interceptor name="sessionPreprocess" class="kr.lesaautomaton.interceptor.SessionPreprocessInterceptor" />				
+			<interceptor name="unescapeString" class="kr.lesaautomaton.interceptor.UnEscapeStringInterceptor" />
+			<interceptor name="setPageId" class="kr.lesaautomaton.interceptor.SetPageIdInterceptor" />
+			<interceptor name="clientCache" class="kr.lesaautomaton.interceptor.ClientCacheInterceptor" />
+
+			<!-- Override predefined intercepter stacks for customizing.. -->
+
+			<interceptor-stack name="basicStack">
+				<interceptor-ref name="exception"/>
+				<interceptor-ref name="sessionPreprocess"/>
+				<interceptor-ref name="servletConfig" />
+				<interceptor-ref name="prepare" />
+				<interceptor-ref name="unescapeString" />
+				<interceptor-ref name="setPageId" />
+				<interceptor-ref name="checkbox" />
+				<interceptor-ref name="multiselect" />
+				<interceptor-ref name="actionMappingParams" />				
+				<interceptor-ref name="staticParams" />
+				<interceptor-ref name="params">
+					<param name="excludeParams">dojo\..*,^struts\..*</param>
+				</interceptor-ref>
+				<interceptor-ref name="conversionError" />
+			</interceptor-stack>	
+
+			<interceptor-stack name="validationWorkflowStack">
+				<interceptor-ref name="validation" />
+				<interceptor-ref name="workflow" />
+			</interceptor-stack>
+
+			<interceptor-stack name="guestStack">
+				<interceptor-ref name="basicStack">
+					<param name="sessionPreprocess.onlyGuest">true</param>
+				</interceptor-ref>
+			</interceptor-stack>
+			
+			<interceptor-stack name="memberStack">
+				<interceptor-ref name="basicStack">
+					<param name="sessionPreprocess.onlyMember">true</param>
+				</interceptor-ref>
+			</interceptor-stack>
+			
+			<interceptor-stack name="superviseStack">
+				<interceptor-ref name="clientCache">
+					<param name="second">-1</param>
+				</interceptor-ref>
+				<interceptor-ref name="basicStack">
+					<param name="sessionPreprocess.onlySupervise">true</param>
+				</interceptor-ref>
+			</interceptor-stack>			
+
+		</interceptors>
+
+		<default-interceptor-ref name="basicStack" />
+		<default-action-ref name="index" />
+
+		<global-results>
+			<result name="login.required">/WEB-INF/jsp/sessions/new.jsp</result>
+			<!--
+				<result name="login" type="redirectAction"> <param
+				name="namespace">/</param> <param name="actionName">login</param>
+				</result>
+			-->
+			<result name="permission.error">/WEB-INF/jsp/permission.error.jsp</result>
+			<result name="invalid.token">/WEB-INF/jsp/invalid.jsp</result>
+			<result name="not.found" type="httpheader">404</result>
+			<result name="error" type="httpheader">500</result>
+		</global-results>
+
+		<global-exception-mappings>
+			<exception-mapping exception="kr.lesaautomaton.exception.PostNotFoundException" result="not.found" />
+		</global-exception-mappings>
+
+	</package>
+
+	<package name="root" extends="app-default" namespace="/">
+
+		<action name="index" class="kr.lesaautomaton.presentation.IndexAction">
+			<!-- 
+			<interceptor-ref name="store">
+				<param name="OperationMode">RETRIEVE</param>
+			</interceptor-ref>
+			-->
+			<interceptor-ref name="basicStack" />
+			<result name="success">/WEB-INF/jsp/index.jsp</result>
+		</action>
+
+		<action name="sitemap" class="kr.lesaautomaton.presentation.BaseAction">
+			<result name="success">/WEB-INF/jsp/sitemap.jsp</result>
+		</action>
+
+	</package>
+
+	<package name="sessions" extends="app-default" namespace="/sessions">
+
+		<action name="new" class="kr.lesaautomaton.presentation.SessionsAction">
+			<interceptor-ref name="guestStack" />
+			<result name="success">/WEB-INF/jsp/sessions/new.jsp</result>
+		</action>
+
+		<action name="create" class="kr.lesaautomaton.presentation.SessionsAction" method="create">
+			<param name="pageId">/sessions/new</param>
+			<interceptor-ref name="token" />
+			<interceptor-ref name="basicStack" />
+			<interceptor-ref name="validationWorkflowStack" />
+			<result name="input">/WEB-INF/jsp/sessions/new.jsp</result>
+<!--			<result name="success" type="redirect">${returnURI}</result>-->
+			<result name="success">/WEB-INF/jsp/sessions/create.jsp</result>
+		</action>
+
+		<action name="destroy" class="kr.lesaautomaton.presentation.SessionsAction" method="destroy">
+			<result name="success" type="redirect">/</result>
+		</action>
+
+	</package>
+
+	<package name="members" extends="app-default" namespace="/members">
+
+		<default-interceptor-ref name="guestStack" />
+
+		<global-results>
+			<result name="agreement_required">/WEB-INF/jsp/members/agreement.jsp</result>
+			<result name="select_member_type">/WEB-INF/jsp/members/select.jsp</result>
+		</global-results>
+
+		<action name="agreement" class="kr.lesaautomaton.presentation.MembersAction" method="agreement" />
+
+		<action name="new" class="kr.lesaautomaton.presentation.MembersAction" method="input">
+			<result name="input">/WEB-INF/jsp/members/form.jsp</result>
+		</action>
+
+		<action name="check_*" class="kr.lesaautomaton.presentation.MembersAction" method="check">
+			<param name="checkFieldName">{1}</param>
+			<interceptor-ref name="token" />
+			<interceptor-ref name="guestStack" />
+			<interceptor-ref name="validationWorkflowStack" />
+			<result name="input">/WEB-INF/jsp/members/check.js.jsp</result>
+			<result name="invalid.token" type="httpheader">500</result>
+		</action>
+
+		<action name="create" class="kr.lesaautomaton.presentation.MembersAction" method="create">
+			<param name="pageId">/members/new</param>
+			<interceptor-ref name="token" />
+			<interceptor-ref name="guestStack" />
+			<interceptor-ref name="validationWorkflowStack" />
+			<!--
+				<interceptor-ref name="store"> <param
+				name="OperationMode">STORE</param> </interceptor-ref> <result
+				name="success" type="redirect">/index.action</result>
+			-->
+			<!-- <result name="success" type="redirectAction">welcome</result> -->
+			<result name="success">/WEB-INF/jsp/members/create.jsp</result>
+			<result name="input">/WEB-INF/jsp/members/form.jsp</result>
+		</action>
+
+		<action name="find" class="kr.lesaautomaton.presentation.MembersAction">
+			<interceptor-ref name="guestStack" />
+			<result name="success">/WEB-INF/jsp/members/find.jsp</result>
+		</action>
+
+		<action name="find_*" class="kr.lesaautomaton.presentation.MembersAction" method="find">
+			<param name="findFieldName">{1}</param>
+			<interceptor-ref name="token" />
+			<interceptor-ref name="guestStack">
+				<param name="unescapeString.paramNames">member.name,member.representative</param>
+			</interceptor-ref>
+			<interceptor-ref name="validationWorkflowStack" />
+			<result name="input">/WEB-INF/jsp/members/find.js.jsp</result>
+			<result name="invalid.token" type="httpheader">500</result>
+		</action>
+
+		<action name="confirm" class="kr.lesaautomaton.presentation.MembersAction">
+			<interceptor-ref name="memberStack"/>
+			<result name="success">/WEB-INF/jsp/members/confirm.jsp</result>
+		</action>
+
+		<action name="edit" class="kr.lesaautomaton.presentation.MembersAction" method="input">
+			<interceptor-ref name="token" />
+			<interceptor-ref name="memberStack" />
+			<interceptor-ref name="validationWorkflowStack" />
+			<result name="input">/WEB-INF/jsp/members/form.jsp</result>
+			<result name="wrong_password">/WEB-INF/jsp/members/confirm.jsp</result>
+		</action>
+
+		<action name="update" class="kr.lesaautomaton.presentation.MembersAction" method="update">
+			<interceptor-ref name="token" />
+			<interceptor-ref name="memberStack" />
+			<interceptor-ref name="validationWorkflowStack" />
+			<result name="success">/WEB-INF/jsp/members/update.jsp</result>
+			<result name="input">/WEB-INF/jsp/members/form.jsp</result>
+		</action>
+
+		<action name="quit" class="kr.lesaautomaton.presentation.MembersAction">
+			<interceptor-ref name="memberStack" />
+			<result name="success">/WEB-INF/jsp/members/quit.jsp</result>
+		</action>
+
+		<action name="destroy" class="kr.lesaautomaton.presentation.MembersAction" method="destroy">
+			<interceptor-ref name="token" />
+			<interceptor-ref name="memberStack" />
+			<interceptor-ref name="validationWorkflowStack" />
+			<result name="success">/WEB-INF/jsp/members/destroy.jsp</result>
+			<result name="input">/WEB-INF/jsp/members/quit.jsp</result>
+		</action>
+
+		<action name="*" class="kr.lesaautomaton.presentation.MembersAction">
+			<result name="success">/WEB-INF/jsp/members/{1}.jsp</result>
+		</action>
+
+	</package>
+
+	<package name="intro" extends="app-default" namespace="/intro">
+
+		<action name="*" class="kr.lesaautomaton.presentation.BaseAction">
+			<result name="success">/WEB-INF/jsp/intro/{1}.jsp</result>
+		</action>
+
+	</package>
+
+	<package name="business" extends="app-default" namespace="/business">
+
+		<action name="scholarship_content" class="kr.lesaautomaton.presentation.ScholarshipBooksAction" method="execute">
+			<result name="success">/WEB-INF/jsp/business/scholarship_content.jsp</result>
+		</action>
+		<action name="*" class="kr.lesaautomaton.presentation.BaseAction">
+			<result name="success">/WEB-INF/jsp/business/{1}.jsp</result>
+		</action>
+
+	</package>
+
+	<package name="donation_requests" extends="app-default" namespace="/donations">
+	
+		<interceptors>
+			<interceptor-stack name="donationStack">
+				<interceptor-ref name="basicStack">
+					<param name="sessionPreprocess.typeCodes">organizations</param>
+				</interceptor-ref>
+			</interceptor-stack>		
+		</interceptors>	
+	
+		<global-results>
+			<result name="permission.error">/WEB-INF/jsp/donations/permission.error.jsp</result>
+		</global-results>
+
+		<action name="confirm*" class="kr.lesaautomaton.presentation.DonationRequestsAction">
+			<interceptor-ref name="donationStack" />
+			<result name="success">/WEB-INF/jsp/donations/confirm{1}.jsp</result>
+		</action>
+
+		<action name="request" class="kr.lesaautomaton.presentation.DonationRequestsAction" method="request">
+			<interceptor-ref name="donationStack" />
+			<result name="input">/WEB-INF/jsp/donations/request_form.jsp</result>
+		</action>
+
+		<action name="requestCreate" class="kr.lesaautomaton.presentation.DonationRequestsAction" method="createDonationRequest">
+			<interceptor-ref name="token" />
+			<interceptor-ref name="donationStack" />
+			<interceptor-ref name="validation" />
+			<result name="success">/WEB-INF/jsp/donations/request_create.jsp</result>
+			<result name="input">/WEB-INF/jsp/donations/request_form.jsp</result>
+		</action>
+		
+		<action name="donation" class="kr.lesaautomaton.presentation.DonationsAction" method="input">
+			<interceptor-ref name="donationStack" />
+			<interceptor-ref name="validationWorkflowStack" />
+			<result name="success">/WEB-INF/jsp/donations/donation_form.jsp</result>
+			<result name="input">/WEB-INF/jsp/donations/donation_form.jsp</result>
+			<result name="error" type="redirect">donation.action</result>
+		</action>
+		
+		<action name="donation_confirm" class="kr.lesaautomaton.presentation.DonationsAction" method="donationConfirm">
+			<interceptor-ref name="donationStack" />
+			<interceptor-ref name="validationWorkflowStack" />
+			<result name="success">/WEB-INF/jsp/donations/donation_confirm_form.jsp</result>
+			<result name="input">/WEB-INF/jsp/donations/donation_confirm_form.jsp</result>
+			<result name="error">/WEB-INF/jsp/donations/confirm_error.jsp</result>
+		</action>
+
+		<action name="confirm_create" class="kr.lesaautomaton.presentation.DonationsAction" method="confirmCreate">
+			<interceptor-ref name="donationStack" />
+			<interceptor-ref name="validationWorkflowStack" />
+			<result name="success">/WEB-INF/jsp/donations/confirm_success.jsp</result>
+			<result name="error">/WEB-INF/jsp/donations/confirm_error.jsp</result>
+		</action>
+
+	</package>
+
+	<package name="financing" extends="app-default" namespace="/financing">
+
+		<action name="*" class="kr.lesaautomaton.presentation.FinancingsAction"
+			method="request">
+			<result name="success">/WEB-INF/jsp/financing/{1}.jsp</result>
+		</action>
+
+	</package>
+
+	<package name="loans" extends="app-default" namespace="/loans"><!--
+	
+		<action name="*" class="kr.lesaautomaton.presentation.LoansAction" method="input">
+			<result name="input">/WEB-INF/jsp/loans/{1}.jsp</result>
+		</action>
+		
+		-->
+		<action name="general" class="kr.lesaautomaton.presentation.LoansAction" method="input">
+			<interceptor-ref name="basicStack">
+				<param name="sessionPreprocess.typeCodes">publishers</param>
+			</interceptor-ref>		
+			<interceptor-ref name="memberStack"/>
+			<interceptor-ref name="validationWorkflowStack"/>		
+			<result name="success">/WEB-INF/jsp/loans/general.jsp</result>
+			<result name="input">/WEB-INF/jsp/loans/general.jsp</result>	
+			<result name="error">/WEB-INF/jsp/loans/request_exists.jsp</result>
+		</action>
+		
+		<action name="generalPreview" class="kr.lesaautomaton.presentation.LoansAction" method="input">
+			<interceptor-ref name="basicStack">
+				<param name="sessionPreprocess.typeCodes">publishers</param>
+			</interceptor-ref>		
+			<interceptor-ref name="memberStack"/>
+			<interceptor-ref name="validationWorkflowStack"/>		
+			<result name="success">/WEB-INF/jsp/loans/general_preview.jsp</result>
+			<result name="input">/WEB-INF/jsp/loans/general_preview.jsp</result>		
+			<result name="error">/WEB-INF/jsp/loans/request_error.jsp</result>	
+		</action>			
+		
+		<action name="generalEdit" class="kr.lesaautomaton.presentation.LoansAction" method="input">
+			<interceptor-ref name="basicStack">
+				<param name="sessionPreprocess.typeCodes">publishers</param>
+			</interceptor-ref>				
+			<interceptor-ref name="memberStack"/>
+			<interceptor-ref name="validationWorkflowStack"/>
+			<interceptor-ref name="chain"/>
+			<result name="success">/WEB-INF/jsp/loans/general.jsp</result>
+			<result name="error">/WEB-INF/jsp/loans/request_exists.jsp</result>
+			<result name="input">/WEB-INF/jsp/loans/general.jsp</result>							
+		</action>		
+		
+		<action name="project" class="kr.lesaautomaton.presentation.LoansAction" method="input">
+			<interceptor-ref name="basicStack">
+				<param name="sessionPreprocess.typeCodes">publishers</param>
+			</interceptor-ref>				
+			<interceptor-ref name="memberStack"/>
+			<interceptor-ref name="validationWorkflowStack"/>		
+			<result name="success">/WEB-INF/jsp/loans/general.jsp</result>
+			<result name="input">/WEB-INF/jsp/loans/general.jsp</result>	
+			<result name="error">/WEB-INF/jsp/loans/request_exists.jsp</result>	
+		</action>
+		
+		<action name="projectPreview" class="kr.lesaautomaton.presentation.LoansAction" method="input">
+			<interceptor-ref name="basicStack">
+				<param name="sessionPreprocess.typeCodes">publishers</param>
+			</interceptor-ref>		
+			<interceptor-ref name="memberStack"/>
+			<interceptor-ref name="validationWorkflowStack"/>		
+			<result name="success">/WEB-INF/jsp/loans/general_preview.jsp</result>
+			<result name="input">/WEB-INF/jsp/loans/general_preview.jsp</result>		
+			<result name="error">/WEB-INF/jsp/loans/request_error.jsp</result>	
+		</action>				
+		
+		<action name="projectEdit" class="kr.lesaautomaton.presentation.LoansAction" method="input">
+			<interceptor-ref name="basicStack">
+				<param name="sessionPreprocess.typeCodes">publishers</param>
+			</interceptor-ref>		
+			<interceptor-ref name="memberStack"/>
+			<interceptor-ref name="validationWorkflowStack"/>
+			<interceptor-ref name="chain"/>
+			<result name="success">/WEB-INF/jsp/loans/general.jsp</result>
+			<result name="error">/WEB-INF/jsp/loans/request_exists.jsp</result>
+			<result name="input">/WEB-INF/jsp/loans/general.jsp</result>							
+		</action>	
+		
+		<action name="mortgage" class="kr.lesaautomaton.presentation.LoansAction" method="input">
+			<interceptor-ref name="basicStack">
+				<param name="sessionPreprocess.typeCodes">privates</param>
+			</interceptor-ref>		
+			<interceptor-ref name="memberStack"/>
+			<interceptor-ref name="validationWorkflowStack"/>		
+			<result name="success">/WEB-INF/jsp/loans/mortgage.jsp</result>
+			<result name="input">/WEB-INF/jsp/loans/mortgage.jsp</result>	
+			<result name="error">/WEB-INF/jsp/loans/request_exists.jsp</result>	
+		</action>	
+		
+		<action name="mortgagePreview" class="kr.lesaautomaton.presentation.LoansAction" method="input">
+			<interceptor-ref name="basicStack">
+				<param name="sessionPreprocess.typeCodes">privates</param>
+			</interceptor-ref>			
+			<interceptor-ref name="memberStack"/>
+			<interceptor-ref name="validationWorkflowStack"/>		
+			<result name="success">/WEB-INF/jsp/loans/mortgage_preview.jsp</result>
+			<result name="input">/WEB-INF/jsp/loans/mortgage_preview.jsp</result>		
+			<result name="error">/WEB-INF/jsp/loans/request_error.jsp</result>	
+		</action>	
+		
+		<action name="mortgageEdit" class="kr.lesaautomaton.presentation.LoansAction" method="input">
+			<interceptor-ref name="basicStack">
+				<param name="sessionPreprocess.typeCodes">privates</param>
+			</interceptor-ref>			
+			<interceptor-ref name="memberStack"/>
+			<interceptor-ref name="validationWorkflowStack"/>
+			<interceptor-ref name="chain"/>
+			<result name="success">/WEB-INF/jsp/loans/mortgage.jsp</result>
+			<result name="error">/WEB-INF/jsp/loans/request_exists.jsp</result>
+			<result name="input">/WEB-INF/jsp/loans/mortgage.jsp</result>							
+		</action>
+		
+		<action name="create" class="kr.lesaautomaton.presentation.LoansAction" method="create">
+			<interceptor-ref name="memberStack">
+				<param name="unescapeString.paramNames">*</param>			
+			</interceptor-ref>
+			<interceptor-ref name="validationWorkflowStack"/>		
+			<result name="success">/WEB-INF/jsp/loans/request_create.jsp</result>
+			<result name="input">/WEB-INF/jsp/loans/request_create.jsp</result>			
+		</action>		
+			
+		<action name="createReady" class="kr.lesaautomaton.presentation.LoansAction" method="createReady">
+			<interceptor-ref name="memberStack" />
+			<interceptor-ref name="validationWorkflowStack"/>		
+			<result name="success">/WEB-INF/jsp/loans/request_create.jsp</result>
+			<result name="input">/WEB-INF/jsp/loans/request_create.jsp</result>		
+		</action>	
+			
+		<action name="update" class="kr.lesaautomaton.presentation.LoansAction" method="create">
+			<interceptor-ref name="memberStack">
+				<param name="unescapeString.paramNames">*</param>			
+			</interceptor-ref>
+			<interceptor-ref name="validationWorkflowStack"/>		
+			<result name="success">/WEB-INF/jsp/loans/request_create.jsp</result>
+			<result name="input">/WEB-INF/jsp/loans/general.jsp</result>			
+		</action>
+		
+	</package>
+
+	<!--
+		<package name="info" extends="app-default" namespace="/info"> <action
+		name="publishers" class="kr.lesaautomaton.presentation.InformsAction"
+		method="index"> <param name="category"></param> <result
+		type="success">/WEB-INF/jsp/info/publishers.jsp</result> </action>
+
+		</package>
+	-->
+
+	<package name="notices" extends="app-default" namespace="/notices">
+
+		<action name="index" class="kr.lesaautomaton.presentation.NoticesAction" method="index">
+			<result name="success">/WEB-INF/jsp/notices/index.jsp</result>
+		</action>
+		<action name="show" class="kr.lesaautomaton.presentation.NoticesAction" method="show">
+			<result name="success">/WEB-INF/jsp/notices/show.jsp</result>
+		</action>
+		<action name="new" class="kr.lesaautomaton.presentation.NoticesAction" method="write">
+			<interceptor-ref name="superviseStack" />
+			<result name="success">/WEB-INF/jsp/notices/form.jsp</result>
+		</action>
+		<action name="create" class="kr.lesaautomaton.presentation.NoticesAction" method="save">
+			<interceptor-ref name="token" />
+			<interceptor-ref name="superviseStack" />
+			<!--			<interceptor-ref name="validationWorkflowStack"/>	-->
+			<interceptor-ref name="validation" />
+			<result name="success">/WEB-INF/jsp/notices/create.jsp</result>
+			<result name="input">/WEB-INF/jsp/notices/form.jsp</result>
+		</action>
+		<action name="edit" class="kr.lesaautomaton.presentation.NoticesAction" method="modify">
+			<interceptor-ref name="superviseStack" />
+			<result name="success">/WEB-INF/jsp/notices/form.jsp</result>
+		</action>
+		<action name="update" class="kr.lesaautomaton.presentation.NoticesAction" method="save">
+			<interceptor-ref name="token" />
+			<interceptor-ref name="superviseStack" />
+			<interceptor-ref name="validation" />
+			<result name="success">/WEB-INF/jsp/notices/update.jsp</result>
+			<result name="input">/WEB-INF/jsp/notices/form.jsp</result>
+		</action>
+		<action name="destroy" class="kr.lesaautomaton.presentation.NoticesAction" method="destroy">
+			<interceptor-ref name="token" />
+			<interceptor-ref name="superviseStack" />
+			<result name="success">/WEB-INF/jsp/notices/destroy.jsp</result>
+		</action>
+	</package>
+
+	<package name="form_data" extends="app-default" namespace="/form_data">
+
+		<action name="index" class="kr.lesaautomaton.presentation.FormDataAction" method="index">
+			<result name="success">/WEB-INF/jsp/form_data/index.jsp</result>
+		</action>
+		<action name="show" class="kr.lesaautomaton.presentation.FormDataAction" method="show">
+			<result name="success">/WEB-INF/jsp/form_data/show.jsp</result>
+		</action>
+		<action name="new" class="kr.lesaautomaton.presentation.FormDataAction" method="write">
+			<interceptor-ref name="superviseStack" />
+			<result name="success">/WEB-INF/jsp/form_data/form.jsp</result>
+		</action>
+		<action name="create" class="kr.lesaautomaton.presentation.FormDataAction" method="save">
+			<interceptor-ref name="token" />
+			<interceptor-ref name="superviseStack" />
+			<interceptor-ref name="validation" />
+			<result name="success">/WEB-INF/jsp/form_data/create.jsp</result>
+			<result name="input">/WEB-INF/jsp/form_data/form.jsp</result>
+		</action>
+		<action name="edit" class="kr.lesaautomaton.presentation.FormDataAction" method="modify">
+			<interceptor-ref name="superviseStack" />
+			<result name="success">/WEB-INF/jsp/form_data/form.jsp</result>
+		</action>
+		<action name="update" class="kr.lesaautomaton.presentation.FormDataAction" method="save">
+			<interceptor-ref name="token" />
+			<interceptor-ref name="superviseStack" />
+			<interceptor-ref name="validation" />
+			<result name="success">/WEB-INF/jsp/form_data/update.jsp</result>
+			<result name="input">/WEB-INF/jsp/form_data/form.jsp</result>
+		</action>
+		<action name="destroy" class="kr.lesaautomaton.presentation.FormDataAction" method="destroy">
+			<interceptor-ref name="token" />
+			<interceptor-ref name="superviseStack" />
+			<result name="success">/WEB-INF/jsp/form_data/destroy.jsp</result>
+		</action>
+	</package>
+	
+	<package name="informs" extends="app-default" namespace="/informs">
+		
+		<action name="index" class="kr.lesaautomaton.presentation.InformsAction" method="index">
+			<result name="success">/WEB-INF/jsp/informs/index.jsp</result>
+		</action>
+		
+		<action name="show" class="kr.lesaautomaton.presentation.InformsAction" method="show">
+			<result name="success">/WEB-INF/jsp/informs/show.jsp</result>
+		</action>
+		
+	</package>
+
+	<package name="faqs" extends="app-default" namespace="/faqs">
+
+		<action name="index" class="kr.lesaautomaton.presentation.FaqsAction" method="index">
+			<result name="success">/WEB-INF/jsp/faqs/index.jsp</result>
+		</action>
+		<action name="show" class="kr.lesaautomaton.presentation.FaqsAction" method="show">
+			<result name="success">/WEB-INF/jsp/faqs/show.jsp</result>
+		</action>
+		<action name="new" class="kr.lesaautomaton.presentation.FaqsAction" method="write">
+			<interceptor-ref name="superviseStack" />
+			<result name="success">/WEB-INF/jsp/faqs/form.jsp</result>
+		</action>
+		<action name="create" class="kr.lesaautomaton.presentation.FaqsAction" method="save">
+			<interceptor-ref name="token" />
+			<interceptor-ref name="superviseStack" />
+			<!--			<interceptor-ref name="validationWorkflowStack"/>	-->
+			<interceptor-ref name="validation" />
+			<result name="success">/WEB-INF/jsp/faqs/create.jsp</result>
+			<result name="input">/WEB-INF/jsp/faqs/form.jsp</result>
+		</action>
+		<action name="edit" class="kr.lesaautomaton.presentation.FaqsAction" method="modify">
+			<interceptor-ref name="superviseStack" />
+			<result name="success">/WEB-INF/jsp/faqs/form.jsp</result>
+		</action>
+		<action name="update" class="kr.lesaautomaton.presentation.FaqsAction" method="save">
+			<interceptor-ref name="token" />
+			<interceptor-ref name="superviseStack" />
+			<interceptor-ref name="validation" />
+			<result name="success">/WEB-INF/jsp/faqs/update.jsp</result>
+			<result name="input">/WEB-INF/jsp/faqs/form.jsp</result>
+		</action>
+		<action name="destroy" class="kr.lesaautomaton.presentation.FaqsAction" method="destroy">
+			<interceptor-ref name="token" />
+			<interceptor-ref name="superviseStack" />
+			<result name="success">/WEB-INF/jsp/faqs/destroy.jsp</result>
+		</action>
+	</package>
+
+	<package name="dataroom" extends="app-default" namespace="/dataroom">
+
+		<action name="*" class="kr.lesaautomaton.presentation.BaseAction">
+			<result name="success">/WEB-INF/jsp/dataroom/{1}.jsp</result>
+		</action>
+
+	</package>
+
+	<package name="community" extends="app-default" namespace="/community">
+	
+		<interceptors>
+		
+			<interceptor name="communityPreprocess" class="kr.lesaautomaton.interceptor.CommunityInterceptor" />
+						
+			<interceptor-stack name="CommunityStack">
+				<interceptor-ref name="exception"/>
+				<interceptor-ref name="communityPreprocess"/>
+				<interceptor-ref name="token">
+					<param name="includeMethods">save,destroy</param>
+				</interceptor-ref>
+				<interceptor-ref name="servletConfig" />
+				<interceptor-ref name="prepare" />
+				<interceptor-ref name="unescapeString" />
+				<interceptor-ref name="checkbox" />
+				<interceptor-ref name="multiselect" />
+				<interceptor-ref name="actionMappingParams" />				
+				<interceptor-ref name="staticParams" />
+				<interceptor-ref name="params">
+					<param name="excludeParams">dojo\..*,^struts\..*</param>
+				</interceptor-ref>
+				<interceptor-ref name="conversionError" />
+			</interceptor-stack>				
+			
+		</interceptors>
+		
+		<default-interceptor-ref name="CommunityStack"/>
+		
+		<global-results>
+			<result name="permission.error">/WEB-INF/jsp/community/invalid.jsp</result>
+			<result name="invalid.token">/WEB-INF/jsp/community/invalid.jsp</result>
+		</global-results>		
+
+		<action name="index" class="kr.lesaautomaton.presentation.CommunityAction" method="index">
+			<interceptor-ref name="CommunityStack">
+				<param name="communityPreprocess.avaliable">accessable</param>
+			</interceptor-ref>
+			<result name="success">/WEB-INF/jsp/community/index.jsp</result>
+		</action>
+		<action name="show" class="kr.lesaautomaton.presentation.CommunityAction" method="show">
+			<interceptor-ref name="CommunityStack">
+				<param name="communityPreprocess.avaliable">readable</param>
+			</interceptor-ref>		
+			<result name="success">/WEB-INF/jsp/community/show.jsp</result>
+		</action>
+		<action name="new" class="kr.lesaautomaton.presentation.CommunityAction" method="write">
+			<interceptor-ref name="CommunityStack">
+				<param name="communityPreprocess.avaliable">writable</param>
+			</interceptor-ref>		
+			<result name="success">/WEB-INF/jsp/community/form.jsp</result>
+		</action>
+		<action name="create" class="kr.lesaautomaton.presentation.CommunityAction" method="save">
+			<interceptor-ref name="CommunityStack">
+				<param name="communityPreprocess.avaliable">writable</param>
+			</interceptor-ref>		
+			<interceptor-ref name="validation" />
+			<result name="success">/WEB-INF/jsp/community/create.jsp</result>
+			<result name="input">/WEB-INF/jsp/community/form.jsp</result>
+		</action>
+		<action name="edit" class="kr.lesaautomaton.presentation.CommunityAction" method="modify">
+			<interceptor-ref name="CommunityStack">
+				<param name="communityPreprocess.avaliable">writable</param>
+			</interceptor-ref>	
+			<result name="success">/WEB-INF/jsp/community/form.jsp</result>
+		</action>
+		<action name="update" class="kr.lesaautomaton.presentation.CommunityAction" method="save">
+			<interceptor-ref name="CommunityStack">
+				<param name="communityPreprocess.avaliable">writable</param>
+			</interceptor-ref>	
+			<interceptor-ref name="validation" />
+			<result name="success">/WEB-INF/jsp/community/update.jsp</result>
+			<result name="input">/WEB-INF/jsp/community/form.jsp</result>
+		</action>
+		<action name="destroy" class="kr.lesaautomaton.presentation.CommunityAction" method="destroy">
+			<interceptor-ref name="CommunityStack">
+				<param name="communityPreprocess.avaliable">writable</param>
+			</interceptor-ref>	
+			<result name="success">/WEB-INF/jsp/community/destroy.jsp</result>
+		</action>
+
+	</package>
+
+	<package name="attachments" extends="app-default" namespace="/attachments">
+			
+		<interceptors>
+			<interceptor-stack name="fileuploadStack">
+				<interceptor-ref name="exception"/>
+				<interceptor-ref name="sessionPreprocess"/>
+				<interceptor-ref name="fileUpload" />
+				<interceptor-ref name="servletConfig" />
+				<interceptor-ref name="prepare" />
+				<interceptor-ref name="unescapeString" />
+				<interceptor-ref name="setPageId" />
+				<interceptor-ref name="checkbox" />
+				<interceptor-ref name="multiselect" />
+				<interceptor-ref name="actionMappingParams" />				
+				<interceptor-ref name="staticParams" />
+				<interceptor-ref name="params">
+					<param name="excludeParams">dojo\..*,^struts\..*</param>
+				</interceptor-ref>
+				<interceptor-ref name="conversionError" />
+			</interceptor-stack>
+		</interceptors>		
+
+		<action name="show" class="kr.lesaautomaton.presentation.AttachmentsAction" method="show">
+			<interceptor-ref name="sessionPreprocess"/>
+			<interceptor-ref name="params" />
+			<result name="success" type="stream">
+				<param name="contentType">application/octet-stream</param>
+				<param name="contentLength">${contentLength}</param>
+				<param name="inputName">inputStream</param>
+				<param name="contentDisposition">${contentDisposition}</param>
+				<param name="allowCaching ">false</param>
+				<param name="bufferSize">4096</param>
+			</result>
+			<result name="login.required" type="httpheader">401</result>
+			<result name="none" type="httpheader">404</result>
+		</action>
+
+		<action name="new" class="kr.lesaautomaton.presentation.AttachmentsAction" method="input">
+			<interceptor-ref name="memberStack" />
+			<result name="success">/WEB-INF/jsp/attachments/new.jsp</result>
+		</action>
+
+		<action name="create" class="kr.lesaautomaton.presentation.AttachmentsAction" method="create">
+			<interceptor-ref name="token" />
+			<interceptor-ref name="fileuploadStack">
+				<param name="sessionPreprocess.onlyMember">true</param>
+			</interceptor-ref>
+			<interceptor-ref name="validationWorkflowStack" />
+			<result name="success">/WEB-INF/jsp/attachments/create.js.jsp</result>
+			<result name="input">/WEB-INF/jsp/attachments/create.js.jsp</result>
+			<result name="invalid.token" type="httpheader">500</result>
+		</action>
+
+		<action name="destroy" class="kr.lesaautomaton.presentation.AttachmentsAction" method="destroy">
+			<interceptor-ref name="token" />
+			<interceptor-ref name="memberStack" />
+			<result name="success">/WEB-INF/jsp/common/token.js.jsp</result>
+			<result name="invalid.token" type="httpheader">500</result>
+		</action>
+
+	</package>
+
+	<package name="zipcodes" extends="app-default" namespace="/zipcodes">
+
+		<action name="search" class="kr.lesaautomaton.presentation.ZipcodesAction" method="search">
+			<interceptor-ref name="basicStack">
+				<param name="unescapeString.paramNames">keyword</param>
+			</interceptor-ref>
+			<interceptor-ref name="validationWorkflowStack" />
+			<result name="input">/WEB-INF/jsp/zipcodes/search.js.jsp</result>
+		</action>
+		<action name="index" class="kr.lesaautomaton.presentation.ZipcodesAction">
+			<result name="success">/WEB-INF/jsp/zipcodes/index.jsp</result>
+		</action>
+
+	</package>
+
+	<include file="struts-supervise.xml" />
+
+</struts>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Group">
+
+	<typeAlias alias="group" type="kr.lesaautomaton.persistence.domain.Group" />
+	
+	<resultMap class="group" id="get-group-result">
+		<result property="code" column="code"/>
+		<result property="name" column="name"/>
+		<result property="supervise" column="is_supervise" jdbcType="CHAR" javaType="boolean"/>
+	</resultMap>	
+	
+	<resultMap class="group" id="get-group-full-result" extends="get-group-result">
+		<result property="code" column="code"/>
+		<result property="name" column="name"/>
+		<result property="description" column="description"/>
+		<result property="supervise" column="is_supervise" jdbcType="CHAR" javaType="boolean"/>
+		<result property="disabledAt" column="disabled_at"/>
+		<result property="createdAt" column="created_at"/>
+		<result property="updatedAt" column="updated_at"/>
+	</resultMap>
+	
+	<select id="getGroupByCode" parameterClass="String" resultMap="get-group-result">
+		<![CDATA[
+			select code, name, is_supervise from groups where code = #value#	
+		]]>
+	</select>	
+	
+	<select id="getGroup" parameterClass="map" resultMap="get-group-full-result">
+		<![CDATA[
+			select * from groups where	
+		]]>
+		<dynamic>
+			<isNotEmpty property="seq" prepend="and">
+				seq = #seq#
+			</isNotEmpty>
+			<isNotEmpty property="code" prepend="and">
+				code = #code#
+			</isNotEmpty>
+		</dynamic>
+	</select>
+	
+	<select id="getGroups" parameterClass="string" resultMap="get-group-result">
+		<![CDATA[
+			select code, name, is_supervise from groups order by code
+		]]>
+	</select>
+		
+</sqlMap>

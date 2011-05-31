@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE validators PUBLIC "-//OpenSymphony Group//XWork Validator 1.0.2//EN" "http://www.opensymphony.com/xwork/xwork-validator-1.0.2.dtd">
+<validators>	
+	<field name="member.email">
+		<field-validator type="email">
+			<message key="validation.invalid"/>
+		</field-validator>
+	</field>
+	<field name="member.tel">
+		<field-validator type="requiredstring" short-circuit="true">
+			<message key="validation.required"/>
+		</field-validator>
+		<field-validator type="regex">
+			<param name="expression">^[0-9]{2,3}-[0-9]{3,4}-[0-9]{4}$</param>
+			<message key="validation.invalid"/>
+		</field-validator>
+	</field>
+	<field name="member.hp">
+		<field-validator type="requiredstring" short-circuit="true">
+			<message key="validation.required"/>
+		</field-validator>
+		<field-validator type="regex">
+			<param name="expression">^[0-9]{2,3}-[0-9]{3,4}-[0-9]{4}$</param>
+			<message key="validation.invalid"/>
+		</field-validator>
+	</field>	
+	<field name="member.fax">
+		<field-validator type="regex">
+			<param name="expression">^[0-9]{2,3}-[0-9]{3,4}-[0-9]{4}$</param>
+			<message key="validation.invalid"/>
+		</field-validator>
+	</field>						
+	<field name="member.address">
+		<field-validator type="requiredstring" short-circuit="true">
+			<param name="trim">true</param>
+			<message key="validation.required"/>
+		</field-validator>
+		<field-validator type="bytesize">
+			<param name="trim">true</param>
+			<param name="minLength">2</param>
+			<param name="maxLength">100</param>
+			<message key="validation.wrong.bytesize"/>
+		</field-validator>			
+	</field>
+	<field name="member.addressDetail">
+		<field-validator type="requiredstring" short-circuit="true">
+			<param name="trim">true</param>
+			<message key="validation.required"/>
+		</field-validator>
+		<field-validator type="bytesize">
+			<param name="trim">true</param>
+			<param name="minLength">2</param>
+			<param name="maxLength">100</param>
+			<message key="validation.wrong.bytesize"/>
+		</field-validator>			
+	</field>	
+	<field name="member.businessLicenseNo">
+		<field-validator type="regex">
+			<param name="expression">^\d{3}-\d{2}-\d{5}$</param>
+			<message key="validation.invalid"/>
+		</field-validator>		
+	</field>	
+	<validator type="fieldexpression">
+		<param name="fieldName">member.publisherName</param>
+		<param name="expression">
+		<![CDATA[
+		member.publisher ? !@org.apache.commons.lang3.StringUtils@isBlank(member.publisherName) : true
+		]]>
+		</param>
+		<message key="validation.required"/>
+	</validator>
+	<field name="member.publisherName">
+		<field-validator type="bytesize">
+			<param name="trim">true</param>
+			<param name="minLength">2</param>
+			<param name="maxLength">50</param>
+			<message key="validation.wrong.bytesize"/>
+		</field-validator>		
+	</field>
+	<field name="member.ssn">
+		<field-validator type="regex">
+			<param name="expression">^\d{6}-[123456]\d{6}$</param>
+			<message key="validation.invalid"/>
+		</field-validator>		
+	</field>	
+	<validator type="fieldexpression">
+		<param name="fieldName">member.registrationNo</param>
+		<param name="expression">
+		<![CDATA[
+		member.publisher ? !@org.apache.commons.lang3.StringUtils@isBlank(member.registrationNo) : true
+		]]>
+		</param>
+		<message key="validation.required"/>
+	</validator>		
+	<validator type="fieldexpression">
+		<param name="fieldName">member.publisherRegdate</param>
+		<param name="expression">
+		<![CDATA[
+		member.publisher ? member.publisherRegdate != null : true
+		]]>
+		</param>
+		<message key="validation.required"/>
+	</validator>
+	<validator type="fieldexpression">
+		<param name="fieldName">member.representative</param>
+		<param name="expression">
+		<![CDATA[
+		member.organization ? !@org.apache.commons.lang3.StringUtils@isBlank(member.representative) : true
+		]]>
+		</param>
+		<message key="validation.required"/>
+	</validator>
+	<field name="member.representative">
+		<field-validator type="bytesize">
+			<param name="trim">true</param>
+			<param name="minLength">2</param>
+			<param name="maxLength">50</param>
+			<message key="validation.wrong.bytesize"/>
+		</field-validator>		
+	</field>
+	<validator type="fieldexpression">
+		<param name="fieldName">member.personInCharge</param>
+		<param name="expression">
+		<![CDATA[
+		member.organization ? !@org.apache.commons.lang3.StringUtils@isBlank(member.personInCharge) : true
+		]]>
+		</param>
+		<message key="validation.required"/>
+	</validator>	
+	<field name="member.personInCharge">
+		<field-validator type="bytesize">
+			<param name="trim">true</param>
+			<param name="minLength">2</param>
+			<param name="maxLength">50</param>
+			<message key="validation.wrong.bytesize"/>
+		</field-validator>	
+	</field>	
+</validators>

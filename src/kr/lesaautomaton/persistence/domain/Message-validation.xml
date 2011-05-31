@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE validators PUBLIC "-//OpenSymphony Group//XWork Validator 1.0.2//EN" "http://www.opensymphony.com/xwork/xwork-validator-1.0.2.dtd">
+<validators>
+	<field name="message.title">
+		<field-validator type="requiredstring" short-circuit="true">
+			<message key="validation.required"/>
+		</field-validator>
+		<field-validator type="bytesize">
+			<param name="trim">true</param>
+			<param name="maxLength">100</param>
+			<message key="validation.overflow.bytesize"/>
+		</field-validator>			
+	</field>
+	<field name="message.writer">
+		<field-validator type="requiredstring" short-circuit="true">
+			<message key="validation.required"/>
+		</field-validator>
+		<field-validator type="bytesize">
+			<param name="trim">true</param>
+			<param name="maxLength">50</param>
+			<message key="validation.overflow.bytesize"/>
+		</field-validator>					
+	</field>
+	<field name="message.contentsWithMarkup">
+		<field-validator type="requiredstring" short-circuit="true">
+			<message key="validation.required"/>
+		</field-validator>
+	</field>	
+</validators>

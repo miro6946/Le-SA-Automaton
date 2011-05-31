@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Message">
+
+	<typeAlias alias="message" type="kr.lesaautomaton.persistence.domain.Message" />
+	
+	<resultMap class="message" id="get-message-result">
+		<result property="seq" column="seq"/>
+		<result property="boardId" column="board_id"/>
+		<result property="branch" column="branch"/>
+		<result property="thread" column="thread"/>
+		<result property="depth" column="depth"/>
+		<result property="title" column="title"/>
+		<result property="writer" column="writer"/>
+		<result property="writerSeq" column="writer_seq"/>
+		<result property="ip" column="ip"/>
+		<result property="hits" column="hits"/>
+		<result property="onTop" column="on_top" jdbcType="CHAR" javaType="boolean"/>
+		<result property="commentsCount" column="comments_count"/>
+		<result property="attachedImageCount" column="attached_image_count"/>
+		<result property="attachedFileCount" column="attached_file_count"/>
+		<result property="disabledAt" column="disabled_at"/>
+		<result property="createdAt" column="created_at"/>
+		<result property="updatedAt" column="updated_at"/>		
+	</resultMap>
+	
+	<resultMap class="message" id="get-message-with-contents-result" extends="get-message-result">
+		<result property="contents" column="contents" jdbcType="CLOB" javaType="String"/>
+		<result property="contentsWithMarkup" column="contents_with_markup" jdbcType="CLOB" javaType="String"/>		
+	</resultMap>	
+	
+	<sql id="message-search-condition">	
+		<isNotEmpty property="writer" prepend="and">
+			writer like #writer#
+		</isNotEmpty>		
+		<isNotEmpty property="title" prepend="and">
+			title like #title#
+		</isNotEmpty>
+		<isNotEmpty property="contents" prepend="and">
+			dbms_lob.instr(contents, #contents#) > 0
+		</isNotEmpty>
+		<isNotEmpty property="onTop" prepend="and">
+			on_top = #onTop:CHAR#
+		</isNotEmpty>
+		<isEqual property="disable" prepend="and" compareValue="false">
+			disabled_at is null
+		</isEqual>				
+	</sql>	
+	
+	<select id="countMessages" parameterClass="map" resultClass="int">
+		<![CDATA[
+			select 
+			count(*) as totalCount
+			from messages
+			where board_id = #boardId# 
+		]]>	
+		<dynamic>
+			<include refid="message-search-condition"/>
+		</dynamic>
+	</select>
+	
+	<select id="getMessages" parameterClass="map" resultMap="get-message-result">
+		<![CDATA[
+			select *
+			from ( select rownum rn, t.*, max(rownum) over(order by rownum desc) totcnt
+			from (
+				select seq, board_id, branch, thread, depth, title, writer, writer_seq, ip, hits, comments_count, on_top, attached_image_count, attached_file_count, disabled_at, created_at, updated_at 
+				from messages
+				where board_id = #boardId#
+		]]>
+		<dynamic>
+			<include refid="message-search-condition"/>
+		</dynamic>	
+		<![CDATA[
+				order by thread desc
+			) t
+			order by rn)
+			where rn between #start# and #end#	
+		]]>	
+	</select>	
+	
+	<select id="getMessage" parameterClass="map" resultMap="get-message-with-contents-result">
+		<![CDATA[
+			select * from messages		
+			where seq = #seq# and board_id = #boardId#	
+		]]>
+		<dynamic>	
+			<isEqual property="disable" prepend="and" compareValue="false">
+				disabled_at is null
+			</isEqual>
+			<isPropertyAvailable property="writerSeq" prepend="and">
+				writer_seq = #writerSeq#
+			</isPropertyAvailable>	
+		</dynamic>
+	</select>	
+	
+	<update id="increaseMessageHits" parameterClass="message">
+		<![CDATA[
+		update messages set hits = hits + 1 where seq = #seq# and board_id = #boardId#
+		]]>
+	</update>
+	
+	<select id="getPreviousMessage" parameterClass="map" resultMap="get-message-result">
+		<![CDATA[
+			select * from (
+			select seq, board_id, branch, thread, depth, title, writer, writer_seq, ip, hits, comments_count, on_top, attached_image_count, attached_file_count, disabled_at, created_at, updated_at 
+			from messages
+			where seq < #seq# and board_id = #boardId#
+		]]>
+		<dynamic>
+			<include refid="message-search-condition"/>
+		</dynamic>
+		<![CDATA[
+			order by thread desc)
+			where rownum = 1
+		]]>			
+	</select>
+	
+	<select id="getNextMessage" parameterClass="map" resultMap="get-message-result">
+		<![CDATA[
+			select seq, board_id, branch, thread, depth, title, writer, writer_seq, ip, hits, comments_count, on_top, attached_image_count, attached_file_count, disabled_at, created_at, updated_at 
+			from messages
+			where seq > #seq# and board_id = #boardId#
+		]]>
+		<dynamic>
+			<include refid="message-search-condition"/>
+		</dynamic>
+		<![CDATA[
+			and rownum = 1 order by thread
+		]]>		
+	</select>	
+	
+	<insert id="insertMessage" parameterClass="map">
+		<selectKey resultClass="int" keyProperty="seq">
+			<![CDATA[
+			select messages_seq.nextval from dual
+			]]>
+		</selectKey>	
+		<![CDATA[
+		insert into messages
+		(seq, board_id, branch, thread, depth, title, writer, writer_seq, ip, hits, comments_count, on_top, attached_image_count, attached_file_count, disabled_at, created_at, updated_at, contents, contents_with_markup) 
+		values
+		(#seq#, #boardId#, #seq#, #seq# * 100, 0, #title#, #writer#, #writerSeq#, #ip#, 0, 0, #onTop:CHAR#, #attachedImageCount#, #attachedFileCount#, 
+		]]>
+		<dynamic>
+			<isPropertyAvailable property="disabledAt">
+			#disabledAt#,
+			</isPropertyAvailable>
+			<isNotPropertyAvailable property="disabledAt">
+			null,
+			</isNotPropertyAvailable>			
+		</dynamic>
+		<![CDATA[ 
+		#createdAt#, #updatedAt#, #contents:CLOB#, #contentsWithMarkup:CLOB#) 
+		]]>	
+	</insert>
+	
+	<insert id="insertReplyMessage" parameterClass="map">
+		<selectKey resultClass="int" keyProperty="seq">
+			<![CDATA[
+			select messages_seq.nextval from dual
+			]]>
+		</selectKey>	
+		<![CDATA[
+		insert into messages
+		(seq, board_id, branch, thread, depth, title, writer, writer_seq, ip, hits, comments_count, on_top, attached_image_count, attached_file_count, disabled_at, created_at, updated_at, contents, contents_with_markup) 
+		values
+		(#seq#, #boardId#, #branch#, #thread#, #depth#, #title#, #writer#, #writerSeq#, #ip#, 0, 0, #onTop:CHAR#, #attachedImageCount#, #attachedFileCount#, 
+		]]>
+		<dynamic>
+			<isPropertyAvailable property="disabledAt">
+			#disabledAt#,
+			</isPropertyAvailable>
+			<isNotPropertyAvailable property="disabledAt">
+			null,
+			</isNotPropertyAvailable>			
+		</dynamic>
+		<![CDATA[ 
+		#createdAt#, #updatedAt#, #contents:CLOB#, #contentsWithMarkup:CLOB#) 
+		]]>	
+	</insert>	
+	
+	<select id="countReplyMessages" resultClass="int" parameterClass="map">
+		<![CDATA[
+		select count(seq) as replyCount from messages where board_id = #boardId# and branch = #branch#
+		]]>
+	</select>
+	
+	<update id="decreaseMessageThread" parameterClass="map">
+		<![CDATA[
+		update messages set thread = thread - 1 where board_id = #boardId# and branch = #branch# and thread < #thread#
+		]]>
+	</update>
+	
+	<update id="increaseMessageThread" parameterClass="map">
+		<![CDATA[
+		update messages set thread = thread + 1 where board_id = #boardId# and branch = #branch# and thread < #thread#
+		]]>
+	</update>	
+	
+	<update id="updateMessage" parameterClass="map">
+		<![CDATA[
+		update messages 
+		set title = #title#,
+		]]>
+		<dynamic>		
+			<isNotEmpty property="writer">
+			writer = #writer#,
+			</isNotEmpty>
+			<!-- 
+			<isNotEmpty property="writerSeq">
+			writer_seq = #writerSeq#,
+			</isNotEmpty>
+			 -->			
+			<isNotNull property="disabledAt">
+			disabled_at = #disabledAt#,
+			</isNotNull>
+			<isNull property="disabledAt">
+			disabled_at = null,
+			</isNull>	
+			<isPropertyAvailable property="onTop">
+			on_top = #onTop:CHAR#, 
+			</isPropertyAvailable>			
+		</dynamic> 
+		<![CDATA[
+		ip = #ip#, attached_image_count = #attachedImageCount#, attached_file_count = #attachedFileCount#, updated_at = #updatedAt#, contents = #contents:CLOB#, contents_with_markup = #contentsWithMarkup:CLOB#
+		where seq = $seq$ and board_id = '$boardId$'
+		]]>
+		<dynamic>
+			<isPropertyAvailable property="writerSeq" prepend="and">
+				writer_seq = $writerSeq$
+			</isPropertyAvailable>
+		</dynamic>
+	</update>
+	
+	<delete id="deleteMessage" parameterClass="map">
+		<![CDATA[
+		delete from messages where seq = #seq# and board_id = #boardId#
+		]]>	
+		<dynamic>
+			<isPropertyAvailable property="writerSeq" prepend="and">
+				writer_seq = #writerSeq#
+			</isPropertyAvailable>
+		</dynamic>		
+	</delete>
+		
+</sqlMap>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Zipcode">
+
+	<typeAlias alias="zipcode" type="kr.lesaautomaton.persistence.domain.Zipcode" />
+	<select id="getZipcodes" resultClass="zipcode" parameterClass="string">
+		<![CDATA[
+			select
+			zipcode_primary as zipcodePrimary, zipcode_secondary as zipcodeSecondary, sido, gugun, dong, etc, addr as address
+			from zipcodes
+			where dong like #value#
+			order by addr
+		]]>
+	</select>
+		
+</sqlMap>

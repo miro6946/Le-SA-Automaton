@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Board">
+
+	<typeAlias alias="board" type="kr.lesaautomaton.persistence.domain.Board" />
+	
+	<resultMap class="board" id="get-board-result">
+		<result property="id" column="id"/>
+		<result property="name" column="name"/>
+		<result property="layout" column="layout"/>
+		<result property="description" column="description"/>
+		<result property="disabledAt" column="disabled_at"/>
+		<result property="createdAt" column="created_at"/>
+		<result property="updatedAt" column="updated_at"/>
+		<result property="accessable" column="accessable"/>
+		<result property="writable" column="writable"/>
+		<result property="readable" column="readable"/>
+		<result property="repliable" column="repliable"/>
+		<result property="commentable" column="commentable"/>
+		<result property="fileAttachable" column="file_attachable"/>
+		<result property="imgAttachable" column="img_attachable"/>
+		<result property="noticable" column="noticable"/>
+		<result property="secretable" column="secretable"/>
+	</resultMap>	 	
+	
+	<select id="getBoards" resultMap="get-board-result">
+		<![CDATA[
+		select * from boards
+		]]>
+	</select>
+	
+		
+</sqlMap>

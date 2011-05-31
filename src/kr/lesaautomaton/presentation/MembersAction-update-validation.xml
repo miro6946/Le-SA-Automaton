@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE validators PUBLIC "-//OpenSymphony Group//XWork Validator 1.0.2//EN" "http://www.opensymphony.com/xwork/xwork-validator-1.0.2.dtd">
+<validators>
+	<field name="pass">
+		<field-validator type="requiredstring" short-circuit="true">
+			<param name="trim">true</param>
+			<message key="validation.required"/>
+		</field-validator>
+		<field-validator type="bytesize">
+			<param name="trim">true</param>
+			<param name="minLength">6</param>
+			<param name="maxLength">12</param>
+			<message key="validation.wrong.bytesize"/>
+		</field-validator>	
+	</field>
+	<validator type="fieldexpression">
+		<param name="fieldName">newPass</param>
+		<param name="expression">
+		<![CDATA[
+		changePass ? !@org.apache.commons.lang3.StringUtils@isBlank(newPass) : true
+		]]>
+		</param>
+		<message key="validation.required"/>
+	</validator>	
+	<field name="member.pass">
+		<field-validator type="bytesize">
+			<param name="trim">true</param>
+			<param name="minLength">6</param>
+			<param name="maxLength">12</param>
+			<message key="validation.wrong.bytesize"/>
+		</field-validator>	
+	</field>	
+	<validator type="fieldexpression">
+		<param name="fieldName">member.ssn</param>
+		<param name="expression">
+		<![CDATA[
+		(member.publisher && changeSSN) ? !@org.apache.commons.lang3.StringUtils@isBlank(member.ssn) : true
+		]]>
+		</param>
+		<message key="validation.required"/>
+	</validator>		
+	<field name="member">
+		<field-validator type="visitor">
+			 <param name="appendPrefix">false</param>
+			<message/>
+		</field-validator>
+	</field>	
+</validators>

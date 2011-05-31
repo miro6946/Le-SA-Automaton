@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Member">
+
+	<typeAlias alias="member" type="kr.lesaautomaton.persistence.domain.Member" />
+	
+	<resultMap class="member" id="get-member-result">
+		<result property="seq" column="seq"/>
+		<result property="memberId" column="member_id"/>
+		<result property="name" column="name"/>
+		<result property="type" column="type"/>
+		<result property="emailId" column="email_id"/>
+		<result property="emailHost" column="email_host"/>
+		<result property="tel1" column="tel_1"/>
+		<result property="tel2" column="tel_2"/>
+		<result property="tel3" column="tel_3"/>
+		<result property="hp1" column="hp_1"/>
+		<result property="hp2" column="hp_2"/>
+		<result property="hp3" column="hp_3"/>
+		<result property="fax1" column="fax_1"/>
+		<result property="fax2" column="fax_2"/>
+		<result property="fax3" column="fax_3"/>
+		<result property="zipcodePrimary" column="zipcode_primary"/>
+		<result property="zipcodeSecondary" column="zipcode_secondary"/>
+		<result property="address" column="address"/>
+		<result property="addressDetail" column="address_detail"/>
+		<result property="usable" column="is_usable" jdbcType="CHAR" javaType="boolean"/>
+		<result property="createdAt" column="created_at"/>
+		<result property="updatedAt" column="updated_at"/>
+		<result property="groupCode" column="group_code"/>
+	</resultMap>
+	
+	<resultMap class="member" id="get-member-with-group-result" extends="get-member-result">
+		<result property="group" column="group_code" select="getGroupByCode"/>
+	</resultMap>	
+	
+	<select id="countMembers" parameterClass="map" resultClass="int">
+		<![CDATA[
+			select 
+			count(*) as totalCount
+			from members 
+		]]>
+		<dynamic prepend="where">
+			<isNotEmpty property="name" prepend="and">
+				name like #name#
+			</isNotEmpty>
+			<isNotEmpty property="memberId" prepend="and">
+				member_id like #memberId#
+			</isNotEmpty>	
+			<isNotEmpty property="type">
+				<iterate property="type" prepend="and" open="(" close=")" conjunction="or">
+					type = #type[]#
+				</iterate>	
+			</isNotEmpty>				
+		</dynamic>			
+	</select>
+	
+	<select id="getMembers" parameterClass="map" resultMap="get-member-result">
+	<![CDATA[
+		select *
+		from( select rownum rn, t.*, max(rownum) over(order by rownum desc) totcnt
+		from (
+			select * from members
+	]]>
+		<dynamic prepend="where">
+			<isNotEmpty property="name" prepend="and">
+				name like #name#
+			</isNotEmpty>
+			<isNotEmpty property="memberId" prepend="and">
+				member_id like #memberId#
+			</isNotEmpty>
+			<isNotEmpty property="type">	
+				<iterate property="type" prepend="and" open="(" close=")" conjunction="or">
+					type = #type[]#
+				</iterate>			
+			</isNotEmpty>
+		</dynamic>	
+	<![CDATA[
+			order by seq desc
+		) t
+		order by rn)
+		where rn between #start# and #end#	
+	]]>	
+	</select>
+	
+	<select id="getMember" parameterClass="map" resultMap="get-member-with-group-result">
+		<![CDATA[
+			select * from members			
+		]]>
+		<dynamic prepend="where">
+			<isNotEmpty property="seq" prepend="and">
+				seq = #seq#
+			</isNotEmpty>		
+			<isNotEmpty property="memberId" prepend="and">
+				member_id = #memberId#
+			</isNotEmpty>
+			<isNotEmpty property="encryptedPass" prepend="and">
+				pass = #encryptedPass#
+			</isNotEmpty>
+			<isNotEmpty property="usable" prepend="and">
+				is_usable = #usable:CHAR#
+			</isNotEmpty>						
+		</dynamic>
+	</select>
+	
+	<select id="getPrivate" resultClass="member" parameterClass="int">
+		<![CDATA[
+			select
+			ssn_primary as ssnPrimary
+			from privates where member_seq = #value#
+		]]>	
+	</select>
+	
+	<select id="getPublisher" resultClass="member" parameterClass="int">
+		<![CDATA[
+			select
+			registration_no as registrationNo, publisher_name as publisherName, person_in_charge as personInCharge, 
+			business_license_no as businessLicenseNo, publisher_regdate as publisherRegdate, ssn_primary as ssnPrimary
+			from publishers where member_seq = #value#
+		]]>	
+	</select>	
+	
+	<select id="getOrganization" resultClass="member" parameterClass="int">
+		<![CDATA[
+			select
+			business_license_no as businessLicenseNo, representative, person_in_charge as personInCharge 
+			from organizations where member_seq = #value#
+		]]>	
+	</select>		
+
+	<select id="existsMemberId" parameterClass="string" resultClass="int">
+		<![CDATA[
+			select seq
+			from members
+			where member_id = #value#
+		]]>	
+	</select>
+	
+	<select id="existsSsn" parameterClass="map" resultClass="int">
+		<![CDATA[
+			select seq
+			from privates
+			where 
+			ssn_primary = #ssnPrimary# and ssn_secondary = #encryptedSsnSecondary#
+		]]>	
+		<dynamic>
+			<isGreaterThan property="seq" compareValue="0" prepend="and">
+			member_seq != #seq#
+			</isGreaterThan>	
+		</dynamic>
+	</select>			
+	
+	<select id="existsBusinessLicenseNo" parameterClass="map" resultClass="int">
+		<![CDATA[
+			select seq
+			from publishers
+			where business_license_no = #businessLicenseNo#
+		]]>	
+		<dynamic>
+			<isGreaterThan property="seq" compareValue="0" prepend="and">
+			member_seq != #seq#
+			</isGreaterThan>	
+		</dynamic>		
+	</select>		
+	
+	<select id="existsName" parameterClass="map" resultClass="int">
+		<![CDATA[
+			select seq
+			from organizations
+			where name = #name#
+		]]>	
+		<dynamic>
+			<isGreaterThan property="seq" compareValue="0" prepend="and">
+			member_seq != #seq#
+			</isGreaterThan>	
+		</dynamic>		
+	</select>		
+	
+	<insert id="insertMember" parameterClass="member">
+		<selectKey resultClass="int" keyProperty="seq">
+			<![CDATA[
+			select members_seq.nextval from dual
+			]]>
+		</selectKey>	
+		<![CDATA[
+		insert into members
+		(
+		seq, member_id, pass, name, type, email_id, email_host, tel_1, tel_2, tel_3, hp_1, hp_2, hp_3, fax_1, fax_2, fax_3,
+		zipcode_primary, zipcode_secondary, address, address_detail, group_code, is_usable, created_at, updated_at
+		)
+		values
+		(
+		#seq#, #memberId#, #encryptedPass#, #name#, #type#, #emailId#, #emailHost#, #tel1#, #tel2#, #tel3#, #hp1#, #hp2#, #hp3#, #fax1#, #fax2#, #fax3#,
+		#zipcodePrimary#, #zipcodeSecondary#, #address#, #addressDetail#, #groupCode#, #usable:CHAR#, #createdAt#, #updatedAt#
+		)
+		]]>
+	</insert>
+	
+	<insert id="insertPrivate" parameterClass="member">
+		<selectKey resultClass="int" keyProperty="privateSeq">
+			<![CDATA[
+			select privates_seq.nextval from dual
+			]]>
+		</selectKey>	
+		<![CDATA[
+		insert into privates
+		(seq, member_seq, ssn_primary, ssn_secondary)
+		values
+		(#privateSeq#, #seq#, #ssnPrimary#, #encryptedSsnSecondary#)
+		]]>
+	</insert>
+	
+	<insert id="insertOrganization" parameterClass="member">
+		<selectKey resultClass="int" keyProperty="organizationSeq">
+			<![CDATA[
+			select organizations_seq.nextval from dual
+			]]>
+		</selectKey>		
+		<![CDATA[
+		insert into organizations
+		(seq, member_seq, name, business_license_no, representative, person_in_charge)
+		values
+		(#organizationSeq#, #seq#, #name#, #businessLicenseNo#, #representative#, #personInCharge#)
+		]]>
+	</insert>
+	
+	<insert id="insertPublisher" parameterClass="member">
+		<selectKey resultClass="int" keyProperty="publisherSeq">
+			<![CDATA[
+			select publishers_seq.nextval from dual
+			]]>
+		</selectKey>		
+		<![CDATA[
+		insert into publishers
+		(seq, member_seq, registration_no, publisher_name, person_in_charge, business_license_no, publisher_regdate, ssn_primary, ssn_secondary)
+		values
+		(#publisherSeq#, #seq#, #registrationNo#, #publisherName#, #personInCharge#, #businessLicenseNo#, #publisherRegdate#, #ssnPrimary#, #encryptedSsnSecondary#)
+		]]>
+	</insert>	
+	
+	<update id="updateMember" parameterClass="member">
+		<![CDATA[
+		update members
+		set 
+		]]>
+		<dynamic>
+			<isNotEmpty property="name" >
+				name = #name#, 
+			</isNotEmpty>		
+			<isNotEmpty property="encryptedPass" >
+				pass = #encryptedPass#, 
+			</isNotEmpty>
+			<isNotEmpty property="groupCode" >
+				group_code = #groupCode#, 
+			</isNotEmpty>			
+			<isNotEmpty property="usable" >
+				is_usable = #usable:CHAR#, 
+			</isNotEmpty>												
+		</dynamic>			
+		<![CDATA[
+		email_id = #emailId#, email_host = #emailHost#, tel_1 = #tel1#, tel_2 = #tel2#, tel_3 = #tel3#, 
+		hp_1 = #hp1#, hp_2 = #hp2#, hp_3 = #hp3#, fax_1 = #fax1#, fax_2 = #fax2#, fax_3 = #fax3#,
+		zipcode_primary = #zipcodePrimary#, zipcode_secondary = #zipcodeSecondary#, 
+		address = #address#, address_detail = #addressDetail#, updated_at = #updatedAt#
+		where seq = #seq#
+		]]>
+	</update>
+	
+	<update id="updatePublisher" parameterClass="member">
+		<![CDATA[
+		update publishers
+		set 
+		]]>
+		<dynamic>
+			<isNotEmpty property="businessLicenseNo">
+			business_license_no = #businessLicenseNo#, 
+			</isNotEmpty>
+		</dynamic>
+		<![CDATA[
+		publisher_name = #publisherName#, person_in_charge = #personInCharge#, registration_no = #registrationNo#, publisher_regdate = #publisherRegdate#
+		]]>
+		<dynamic>
+			<isNotEmpty property="ssn">
+			, ssn_primary = #ssnPrimary#, ssn_secondary = #encryptedSsnSecondary#			
+			</isNotEmpty>		
+		</dynamic>
+		<![CDATA[
+		where member_seq = #seq#
+		]]>
+	</update>
+	
+	<update id="updateOrganization" parameterClass="member">
+		<![CDATA[
+		update organizations
+		set 
+		]]>
+		<dynamic>
+			<isNotEmpty property="name">
+			name = #name#, 
+			</isNotEmpty>
+		</dynamic>
+		<![CDATA[		
+		business_license_no = #businessLicenseNo#, representative = #representative:VARCHAR:''#, person_in_charge = #personInCharge# 
+		where member_seq = #seq#
+		]]>	
+	</update>
+	
+	<delete id="deleteMember" parameterClass="int">
+		<![CDATA[
+		delete from members where seq = #value# and is_persistence = 'N'
+		]]>
+	</delete>	
+	
+	<select id="findPrivate" resultClass="map" parameterClass="member">
+	</select>
+	
+	<select id="findMember" resultClass="member" parameterClass="member">
+		<![CDATA[
+		select members.seq, member_id as memberId, email_id as emailId, email_host as emailHost from members 
+		]]>
+		<dynamic>
+			<isEqual property="type" compareValue="privates">
+			, privates where members.seq = privates.member_seq 
+			</isEqual>
+			<isEqual property="type" compareValue="publishers">
+			, publishers where members.seq = publishers.member_seq 
+			</isEqual>
+			<isEqual property="type" compareValue="organizations">
+			, organizations where members.seq = organizations.member_seq 
+			</isEqual>							
+		</dynamic>
+		<dynamic>
+			<isNotEmpty property="name" prepend="and">
+				members.name = #name#
+			</isNotEmpty>
+			<isNotEmpty property="memberId" prepend="and">
+				member_id = #memberId#
+			</isNotEmpty>					
+			<isNotEmpty property="ssn" prepend="and">
+				ssn_primary = #ssnPrimary# and ssn_secondary = #encryptedSsnSecondary#
+			</isNotEmpty>
+			<isNotEmpty property="businessLicenseNo" prepend="and">
+				business_license_no = #businessLicenseNo#
+			</isNotEmpty>
+			<isNotEmpty property="representative" prepend="and">
+				representative = #representative#
+			</isNotEmpty>
+		</dynamic>		
+	</select>
+	
+	<update id="updatePass" parameterClass="member">
+		<![CDATA[
+		update members set pass = #encryptedPass# where seq = #seq#
+		]]>					
+	</update>
+		
+</sqlMap>

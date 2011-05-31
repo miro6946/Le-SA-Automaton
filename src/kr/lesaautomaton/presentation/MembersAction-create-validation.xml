@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE validators PUBLIC "-//OpenSymphony Group//XWork Validator 1.0.2//EN" "http://www.opensymphony.com/xwork/xwork-validator-1.0.2.dtd">
+<validators>
+	<field name="member.memberId">
+		<field-validator type="requiredstring" short-circuit="true">
+			<param name="trim">true</param>
+			<message key="validation.required"/>
+		</field-validator>
+		<field-validator type="regex">
+			<param name="expression">^[a-z]{1}[a-z0-9]{3,7}$</param>
+			<message key="validation.invalid"/>
+		</field-validator>
+	</field>
+	<field name="member.pass">
+		<field-validator type="requiredstring" short-circuit="true">
+			<param name="trim">true</param>
+			<message key="validation.required"/>
+		</field-validator>
+		<field-validator type="bytesize">
+			<param name="trim">true</param>
+			<param name="minLength">6</param>
+			<param name="maxLength">12</param>
+			<message key="validation.wrong.bytesize"/>
+		</field-validator>	
+	</field>
+	<field name="member.name">
+		<field-validator type="requiredstring" short-circuit="true">
+			<param name="trim">true</param>
+			<message key="validation.required"/>
+		</field-validator>
+		<field-validator type="bytesize">
+			<param name="trim">true</param>
+			<param name="minLength">2</param>
+			<param name="maxLength">50</param>
+			<message key="validation.wrong.bytesize"/>
+		</field-validator>	
+	</field>
+	<validator type="fieldexpression">
+		<param name="fieldName">member.ssn</param>
+		<param name="expression">
+		<![CDATA[
+		(member.private || member.publisher) ? !@org.apache.commons.lang3.StringUtils@isBlank(member.ssn) : true
+		]]>
+		</param>
+		<message key="validation.required"/>
+	</validator>
+	<validator type="fieldexpression">
+		<param name="fieldName">member.businessLicenseNo</param>
+		<param name="expression">
+		<![CDATA[
+		member.publisher ? !@org.apache.commons.lang3.StringUtils@isBlank(member.businessLicenseNo) : true
+		]]>
+		</param>
+		<message key="validation.required"/>
+	</validator>			
+	<field name="member">
+		<field-validator type="visitor">
+			 <param name="appendPrefix">false</param>
+			<message/>
+		</field-validator>
+	</field>	
+</validators>

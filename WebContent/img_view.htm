@@ -1,0 +1,53 @@
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<script type="text/javascript" src="/javascripts/jquery-1.4.2.js"></script>
+<script type="text/javascript" src="/javascripts/application.js"></script>
+<script type="text/javascript">
+document.title = opener.document.title;
+
+var MAX_WIDTH = 800;
+var MAX_HEIGHT = 600;
+
+var imgSrc = self.location.href.split('?img_src=');
+imgSrc = imgSrc[imgSrc.length - 1];
+
+function resizeWindowToImageSize(){
+
+	var w = document.images.anakin.width;
+	var h = document.images.anakin.height;
+
+	if(w <= MAX_WIDTH && h <= MAX_HEIGHT){
+		w += 10;
+		h += 80;
+	}else{
+		w = ((w <= MAX_WIDTH) ? w : MAX_WIDTH) + 25;
+		h = ((h <= MAX_HEIGHT) ? h : MAX_HEIGHT) + 90;
+		document.body.scroll ="yes";
+	}
+
+	window.resizeTo(w, h);
+	window.moveTo((screen.width-w)/2, (screen.height-h)/2);
+
+}
+
+jQuery(function(){
+
+	$('<img name="anakin" src="'+ imgSrc +'"/>').appendTo('body').load(function(){
+		setTimeout("resizeWindowToImageSize()", 500);
+	});
+
+	$('body').click(function(){
+		self.close();
+	});
+	
+	
+});
+</script>
+</head>
+
+<body id="body" style="margin:0;padding:0;cursor:pointer;"></body>
+</html>

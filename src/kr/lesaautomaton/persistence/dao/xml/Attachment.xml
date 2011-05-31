@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Attachment">
+
+	<typeAlias alias="attachment" type="kr.lesaautomaton.persistence.domain.Attachment" />
+	
+	<resultMap class="attachment" id="get-attachment-result">
+		<result property="seq" column="seq"/>
+		<result property="attachableSeq" column="attachable_seq"/>
+		<result property="attachableType" column="attachable_type"/>
+		<result property="secure" column="secure" jdbcType="CHAR" javaType="boolean"/>
+		<result property="filePath" column="file_path"/>
+		<result property="fileName" column="file_name"/>
+		<result property="fileExtension" column="file_extension"/>
+		<result property="fileSize" column="file_size"/>
+		<result property="uploadType" column="upload_type"/>
+		<result property="createdAt" column="created_at"/>
+		<result property="updatedAt" column="updated_at"/>		
+	</resultMap>
+	
+	<sql id="search-condition-attachable">
+		<isNotEmpty property="attachableSeq" prepend="and">
+			attachable_seq = #attachableSeq#
+		</isNotEmpty>
+		<isNotEmpty property="attachableType" prepend="and">
+			attachable_type = #attachableType#
+		</isNotEmpty>
+		<isNotEmpty property="orphanFilter">
+			<isEqual property="orphanFilter" compareValue="true">
+				<isEmpty property="attachableSeq" prepend="and">
+					attachable_seq = 0
+				</isEmpty>		
+				<isEmpty property="attachableType" prepend="and">
+					attachable_type is null
+				</isEmpty>
+			</isEqual>
+		</isNotEmpty>
+	</sql>
+	
+	<select id="getAttachment" parameterClass="map" resultMap="get-attachment-result">
+		<![CDATA[
+			select * from attachments		
+			where seq = #seq#	
+		]]>
+		<dynamic>	
+			<include refid="search-condition-attachable"/>
+		</dynamic>
+	</select>
+	
+	<select id="getAttachments" parameterClass="map" resultMap="get-attachment-result">
+		<![CDATA[
+			select * from attachments			
+		]]>
+		<dynamic prepend="where">
+			<isNotEmpty property="seq" prepend="and">
+				<iterate property="seq" open="(" close=")" conjunction="or">
+					seq = #seq[]#
+				</iterate>				
+			</isNotEmpty>		
+			<include refid="search-condition-attachable"/>
+			<isNotEmpty property="uploadType" prepend="and">
+				upload_type = #uploadType#
+			</isNotEmpty>			
+		</dynamic>
+	</select>	
+	
+	<insert id="insertAttachment" parameterClass="attachment">
+		<selectKey resultClass="int" keyProperty="seq">
+			<![CDATA[
+			select attachments_seq.nextval from dual
+			]]>
+		</selectKey>	
+		<![CDATA[
+		insert into attachments
+		(seq, attachable_seq, attachable_type, secure, file_path, file_name, file_extension, file_size, upload_type, created_at, updated_at) 
+		values
+		(#seq#, #attachableSeq#, #attachableType#, #secure:CHAR#, #filePath#, #fileName#, #fileExtension#, #fileSize#, #uploadType#, #createdAt#, #updatedAt#) 
+		]]>	
+	</insert>
+	
+	<update id="updateAttachable" parameterClass="attachment">
+		<![CDATA[
+		update attachments set attachable_seq = #attachableSeq#, attachable_type = #attachableType# where seq = #seq#
+		]]>
+	</update>
+	
+	<update id="deleteAttachable" parameterClass="map">
+		<![CDATA[
+		update attachments set attachable_seq = 0, attachable_type = null 
+		where attachable_seq = #attachableSeq# and attachable_type = #attachableType#
+		]]>
+		<dynamic>
+			<isNotEmpty property="seq" prepend="and">
+				seq = #seq#
+			</isNotEmpty>		
+		</dynamic>		
+	</update>	
+	
+	<delete id="deleteAttachment" parameterClass="attachment">
+		<![CDATA[
+		delete from attachments where seq = #seq#
+		]]>
+		<dynamic>	
+			<isGreaterThan property="attachableSeq" compareValue="0" prepend="and">
+				attachable_seq = #attachableSeq# and attachable_type = #attachableType#
+			</isGreaterThan>
+			<isEqual property="attachableSeq" compareValue="0" prepend="and">
+				attachable_seq = 0 and attachable_type = #attachableType#
+			</isEqual>
+		</dynamic>
+	</delete>
+		
+</sqlMap>

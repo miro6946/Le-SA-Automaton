@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" id="WebApp_ID" version="2.5">
+  <display-name>TKPF Official</display-name>
+  
+  <filter>
+  	<filter-name>struts2</filter-name>
+  	<filter-class>org.apache.struts2.dispatcher.ng.filter.StrutsPrepareAndExecuteFilter</filter-class>
+  </filter>
+  
+  <filter-mapping>
+  	<filter-name>struts2</filter-name>
+  	<url-pattern>*.action</url-pattern>  	
+  </filter-mapping>
+  
+  <filter-mapping>
+  	<filter-name>struts2</filter-name>
+  	<url-pattern>/struts/*</url-pattern>  	
+  </filter-mapping>  
+  
+  <listener>
+  	<listener-class>org.apache.struts2.tiles.StrutsTilesListener</listener-class>
+  </listener>
+  
+  <listener>
+  	<listener-class>kr.lesaautomaton.utils.ContextListener</listener-class>
+  </listener>
+
+  <listener>
+  	<listener-class>kr.lesaautomaton.utils.SessionListener</listener-class>
+  </listener>
+  
+  <listener>
+  	<listener-class>kr.lesaautomaton.utils.RequestListener</listener-class>
+  </listener>  
+	
+  <!-- 
+  <session-config>
+    <session-timeout>30</session-timeout>
+  </session-config>
+   -->    
+    
+  <welcome-file-list>
+    <welcome-file>index.html</welcome-file>
+    <welcome-file>index.htm</welcome-file>
+    <welcome-file>index.jsp</welcome-file>
+    <welcome-file>default.html</welcome-file>
+    <welcome-file>default.htm</welcome-file>
+    <welcome-file>default.jsp</welcome-file>
+  </welcome-file-list>
+  
+  <!-- 
+  <jsp-config>
+	  <taglib>
+	    <taglib-uri>struts-bean</taglib-uri>
+	    <taglib-location>/WEB-INF/tld/struts-bean.tld</taglib-location>
+	  </taglib>
+	
+	  <taglib>
+	    <taglib-uri>struts-html</taglib-uri>
+	    <taglib-location>/WEB-INF/tld/struts-html.tld</taglib-location>
+	  </taglib>
+	
+	  <taglib>
+	    <taglib-uri>struts-logic</taglib-uri>
+	    <taglib-location>/WEB-INF/tld/struts-logic.tld</taglib-location>
+	  </taglib>
+  </jsp-config>
+   -->
+  
+  <!-- 
+  <resource-ref>
+    <description>
+      JPetStore DataSource
+    </description>
+    <res-ref-name>
+      jdbc/jpetstore1
+    </res-ref-name>
+    <res-type>
+      javax.sql.DataSource
+    </res-type>
+    <res-auth>
+      Container
+    </res-auth>  
+  </resource-ref>
+   -->
+  
+  <!-- 
+  <security-constraint>
+    <web-resource-collection>
+      <web-resource-name>
+        Restrict access to JSP pages
+      </web-resource-name>
+      <url-pattern>*.jsp</url-pattern>
+    </web-resource-collection>
+    <auth-constraint>
+      <description>
+        With no roles defined, no access granted
+      </description>
+    </auth-constraint>  
+  </security-constraint>
+   -->
+</web-app>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE validators PUBLIC "-//OpenSymphony Group//XWork Validator 1.0.2//EN" "http://www.opensymphony.com/xwork/xwork-validator-1.0.2.dtd">
+<validators>
+	<field name="member.memberId">
+		<field-validator type="requiredstring" short-circuit="true">
+			<param name="trim">true</param>
+			<message key="validation.required"/>
+		</field-validator>
+		<field-validator type="bytesize">
+			<param name="trim">true</param>
+			<param name="minLength">4</param>
+			<param name="maxLength">8</param>
+			<message key="validation.wrong.bytesize"/>
+		</field-validator>			
+	</field>
+	<field name="member.pass">
+		<field-validator type="requiredstring" short-circuit="true">
+			<param name="trim">true</param>
+			<message key="validation.required"/>
+		</field-validator>
+		<field-validator type="bytesize">
+			<param name="trim">true</param>
+			<param name="minLength">6</param>
+			<param name="maxLength">12</param>
+			<message key="validation.wrong.bytesize"/>
+		</field-validator>	
+	</field>	
+</validators>

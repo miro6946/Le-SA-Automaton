@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="ApplicationSetup">
+
+	<typeAlias alias="applicationSetup" type="kr.lesaautomaton.persistence.domain.ApplicationSetup" />
+	
+	<resultMap class="applicationSetup" id="get-ApplicationSetup-result">
+		<result property="seq" column="seq"/>
+		<result property="scholarshipBooksYear" column="scholarship_books_year"/>		
+	</resultMap>
+	
+	<select id="getApplicationSetup" resultMap="get-ApplicationSetup-result">
+		<![CDATA[
+			select * from (select * from application_setups order by seq desc) where rownum = 1
+		]]>
+	</select>
+	
+	<update id="updateApplicationSetup" parameterClass="applicationSetup">
+		<![CDATA[
+			update application_setups
+			set
+		]]>
+		<dynamic>
+			<isGreaterThan property="scholarshipBooksYear" compareValue="0">
+			scholarship_books_year = #scholarshipBooksYear#
+			</isGreaterThan>
+		</dynamic>
+		<![CDATA[
+		where seq = #seq#
+		]]>
+	</update>
+	
+</sqlMap>
